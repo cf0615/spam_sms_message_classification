@@ -1,1 +1,6 @@
-Folder for Machine Learning files/training/etc
+## Installation
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install package needed.
+
+```bash
+pip install -r requirements.txt
+```
