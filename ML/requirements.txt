@@ -2,3 +2,5 @@ pandas
 numpy
 nltk
 notebook
+matplotlib
+seaborn
