@@ -4,3 +4,4 @@ nltk
 notebook
 matplotlib
 seaborn
+testing
