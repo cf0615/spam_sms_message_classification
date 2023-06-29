@@ -33,7 +33,7 @@ class _MyAppState extends State<MyApp> {
             SmsQueryKind.inbox,
             SmsQueryKind.sent,
           ],
-          count: 10,
+          count: 30,
         );
         setState(() => _messages = messages);
       } else {
@@ -53,11 +53,38 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Flutter SMS Inbox App',
       theme: ThemeData(
-        primarySwatch: Colors.teal,
+        primarySwatch: const MaterialColor(
+          0xFF69dbe4,
+          <int, Color>{
+            50: Color(0xFFE0F2F1),
+            100: Color(0xFFB2DFDB),
+            200: Color(0xFF80CBC4),
+            300: Color(0xFF4DB6AC),
+            400: Color(0xFF26A69A),
+            500: Color(0xFF009688),
+            600: Color(0xFF00897B),
+            700: Color(0xFF00796B),
+            800: Color(0xFF00695C),
+            900: Color(0xFF004D40),
+          },
+        ),
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('SMS Inbox Example'),
+          title: const Text(
+            'Messages',
+            style: TextStyle(color: Colors.white),
+          ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.menu,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              // Add your menu button functionality here
+            },
+          ),
         ),
         body: Container(
           padding: const EdgeInsets.all(10.0),
@@ -67,7 +94,7 @@ class _MyAppState extends State<MyApp> {
                 )
               : Center(
                   child: Text(
-                    'No messages to show.\n Tap refresh button...',
+                    'No messages to show.\n Tap refresh button few time...',
                     style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
@@ -82,7 +109,7 @@ class _MyAppState extends State<MyApp> {
                   SmsQueryKind.inbox,
                   SmsQueryKind.sent,
                 ],
-                count: 10,
+                count: 30,
               );
               debugPrint('sms inbox messages: ${messages.length}');
 
@@ -93,6 +120,7 @@ class _MyAppState extends State<MyApp> {
               await Permission.sms.request();
             }
           },
+          backgroundColor: const Color(0xFF69dbe4),
           child: const Icon(Icons.refresh),
         ),
       ),
