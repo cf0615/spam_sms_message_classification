@@ -18,6 +18,9 @@ class _MyAppState extends State<MyApp> {
   final SmsQuery _query = SmsQuery();
   List<SmsMessage> _messages = [];
 
+  // Define a GlobalKey for the Scaffold to control the drawer
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   Future<void> _requestPermission() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final bool hasRequestedPermission =
@@ -48,8 +51,32 @@ class _MyAppState extends State<MyApp> {
     _requestPermission();
   }
 
+  List<_ChatItem> _groupMessagesBySender(List<SmsMessage> messages) {
+    Map<String, List<SmsMessage>> groupedMessages = {};
+
+    for (var message in messages) {
+      var sender = message.sender ?? "Unknown";
+
+      if (groupedMessages.containsKey(sender)) {
+        groupedMessages[sender]!.add(message);
+      } else {
+        groupedMessages[sender] = [message];
+      }
+    }
+
+    List<_ChatItem> chatItems = [];
+
+    groupedMessages.forEach((key, value) {
+      chatItems.add(_ChatItem(sender: key, messages: value));
+    });
+
+    return chatItems;
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<_ChatItem> chatItems = _groupMessagesBySender(_messages);
+
     return MaterialApp(
       title: 'Flutter SMS Inbox App',
       theme: ThemeData(
@@ -70,6 +97,7 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
       home: Scaffold(
+        key: _scaffoldKey, // Assign the GlobalKey to the Scaffold
         appBar: AppBar(
           title: const Text(
             'Messages',
@@ -82,20 +110,64 @@ class _MyAppState extends State<MyApp> {
               color: Colors.white,
             ),
             onPressed: () {
-              // Add your menu button functionality here
+              // Open the drawer when the menu icon is pressed
+              _scaffoldKey.currentState!.openDrawer();
             },
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(
+                Icons.edit,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                // Add your edit button functionality here
+              },
+            ),
+          ],
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                ),
+                child: const Text(
+                  'Menu',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                  ),
+                ),
+              ),
+              ListTile(
+                title: const Text('Item 1'),
+                onTap: () {
+                  // Handle item 1 click
+                },
+              ),
+              ListTile(
+                title: const Text('Item 2'),
+                onTap: () {
+                  // Handle item 2 click
+                },
+              ),
+              // Add more ListTile widgets for additional menu items
+            ],
           ),
         ),
         body: Container(
           padding: const EdgeInsets.all(10.0),
-          child: _messages.isNotEmpty
-              ? _MessagesListView(
-                  messages: _messages,
+          child: chatItems.isNotEmpty
+              ? _ChatListView(
+                  chatItems: chatItems,
                 )
               : Center(
                   child: Text(
-                    'No messages to show.\n Tap refresh button few time...',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    'No messages to show.\n Tap refresh button few times...',
+                    style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -128,25 +200,55 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class _MessagesListView extends StatelessWidget {
-  const _MessagesListView({
+class _ChatItem {
+  final String? sender; // Change the type to String?
+
+  List<SmsMessage> messages;
+
+  _ChatItem({required this.sender, required this.messages});
+}
+
+class _ChatListView extends StatelessWidget {
+  const _ChatListView({
     Key? key,
-    required this.messages,
+    required this.chatItems,
   }) : super(key: key);
 
-  final List<SmsMessage> messages;
+  final List<_ChatItem> chatItems;
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
       shrinkWrap: true,
-      itemCount: messages.length,
+      itemCount: chatItems.length,
       itemBuilder: (BuildContext context, int i) {
-        var message = messages[i];
+        var chatItem = chatItems[i];
 
         return ListTile(
-          title: Text('${message.sender} [${message.date}]'),
-          subtitle: Text('${message.body}'),
+          leading: const CircleAvatar(
+            // Add your profile icon logic here, such as fetching and displaying the sender's profile image
+            child: Icon(Icons.person),
+          ),
+          title: Text('${chatItem.sender}'),
+          subtitle: Text('${chatItem.messages.last.body}'),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('${chatItem.sender}'),
+                  content: Column(
+                    children: chatItem.messages.map((message) {
+                      return ListTile(
+                        title: Text('${message.date}'),
+                        subtitle: Text('${message.body}'),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );
