@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,9 +18,34 @@ class _MyAppState extends State<MyApp> {
   final SmsQuery _query = SmsQuery();
   List<SmsMessage> _messages = [];
 
+  Future<void> _requestPermission() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final bool hasRequestedPermission =
+        prefs.getBool('hasRequestedPermission') ?? false;
+
+    if (!hasRequestedPermission) {
+      final PermissionStatus permissionStatus = await Permission.sms.request();
+      if (permissionStatus.isGranted) {
+        prefs.setBool('hasRequestedPermission', true);
+        // Permission granted, perform the necessary operations
+        final messages = await _query.querySms(
+          kinds: [
+            SmsQueryKind.inbox,
+            SmsQueryKind.sent,
+          ],
+          count: 10,
+        );
+        setState(() => _messages = messages);
+      } else {
+        // Permission denied, handle the case accordingly
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _requestPermission();
   }
 
   @override
@@ -56,12 +82,13 @@ class _MyAppState extends State<MyApp> {
                   SmsQueryKind.inbox,
                   SmsQueryKind.sent,
                 ],
-                // address: '+254712345789',
                 count: 10,
               );
               debugPrint('sms inbox messages: ${messages.length}');
 
-              setState(() => _messages = messages);
+              setState(() {
+                _messages = messages;
+              });
             } else {
               await Permission.sms.request();
             }
