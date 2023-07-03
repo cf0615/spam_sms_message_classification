@@ -223,6 +223,7 @@ class _ChatListView extends StatelessWidget {
       itemCount: chatItems.length,
       itemBuilder: (BuildContext context, int i) {
         var chatItem = chatItems[i];
+        var latestMessage = chatItem.messages.last;
 
         return ListTile(
           leading: const CircleAvatar(
@@ -230,7 +231,19 @@ class _ChatListView extends StatelessWidget {
             child: Icon(Icons.person),
           ),
           title: Text('${chatItem.sender}'),
-          subtitle: Text('${chatItem.messages.last.body}'),
+          subtitle: Row(
+            children: [
+              Text('${latestMessage.body}'),
+              const SizedBox(width: 8),
+              Text(
+                _formatDateTime(latestMessage.date!),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
           onTap: () {
             showDialog(
               context: context,
@@ -240,7 +253,7 @@ class _ChatListView extends StatelessWidget {
                   content: Column(
                     children: chatItem.messages.map((message) {
                       return ListTile(
-                        title: Text('${message.date}'),
+                        title: Text('${message.date!}'),
                         subtitle: Text('${message.body}'),
                       );
                     }).toList(),
@@ -252,5 +265,15 @@ class _ChatListView extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _formatDateTime(DateTime? dateTime) {
+    if (dateTime != null) {
+      // Implement your formatting logic here to display the datetime in your desired format
+      // You can use the intl package or other date formatting libraries
+      return '${dateTime.hour}:${dateTime.minute}';
+    } else {
+      return '';
+    }
   }
 }
