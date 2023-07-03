@@ -1,7 +1,10 @@
+// ignore_for_file: library_private_types_in_public_api, unnecessary_string_interpolations, sized_box_for_whitespace
+
 import 'package:flutter/material.dart';
 import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const MyApp());
@@ -67,7 +70,7 @@ class _MyAppState extends State<MyApp> {
     List<_ChatItem> chatItems = [];
 
     groupedMessages.forEach((key, value) {
-      chatItems.add(_ChatItem(sender: key, messages: value));
+      chatItems.add(_ChatItem(sender: key, messages: value, profileIcon: ''));
     });
 
     return chatItems;
@@ -127,37 +130,81 @@ class _MyAppState extends State<MyApp> {
           ],
         ),
         drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
+          child: Column(
             children: <Widget>[
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                ),
-                child: const Text(
-                  'Menu',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
+              Container(
+                height: 80,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF69dbe4),
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(16),
+                    ),
+                  ),
+                  padding: EdgeInsets.all(16),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Menu',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
                   ),
                 ),
               ),
-              ListTile(
-                title: const Text('Item 1'),
-                onTap: () {
-                  // Handle item 1 click
-                },
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: <Widget>[
+                    ListTile(
+                      leading: const Icon(Icons.mail),
+                      title: const Text('All Messages'),
+                      onTap: () {
+                        // Handle All Messages item click
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.star),
+                      title: const Text('Starred'),
+                      onTap: () {
+                        // Handle Starred item click
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.report),
+                      title: const Text('Spam'),
+                      onTap: () {
+                        // Handle Spam item click
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.delete),
+                      title: const Text('Bin'),
+                      onTap: () {
+                        // Handle Bin item click
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.block),
+                      title: const Text('Block'),
+                      onTap: () {
+                        // Handle Block item click
+                      },
+                    ),
+                  ],
+                ),
               ),
               ListTile(
-                title: const Text('Item 2'),
+                leading: const Icon(Icons.settings),
+                title: const Text('Settings'),
                 onTap: () {
-                  // Handle item 2 click
+                  // Handle Settings item click
                 },
               ),
-              // Add more ListTile widgets for additional menu items
             ],
           ),
         ),
+
         body: Container(
           padding: const EdgeInsets.all(10.0),
           child: chatItems.isNotEmpty
@@ -201,11 +248,21 @@ class _MyAppState extends State<MyApp> {
 }
 
 class _ChatItem {
-  final String? sender; // Change the type to String?
-
+  final String? sender;
+  final String? profileIcon;
   List<SmsMessage> messages;
+  late DateTime latestMessageDate;
 
-  _ChatItem({required this.sender, required this.messages});
+  _ChatItem({
+    required this.sender,
+    required this.profileIcon,
+    required this.messages,
+  }) {
+    // Find the latest message date
+    latestMessageDate = messages
+        .map((message) => message.date ?? DateTime(0))
+        .reduce((value, element) => value.isAfter(element) ? value : element);
+  }
 }
 
 class _ChatListView extends StatelessWidget {
@@ -219,7 +276,6 @@ class _ChatListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      shrinkWrap: true,
       itemCount: chatItems.length,
       itemBuilder: (BuildContext context, int i) {
         var chatItem = chatItems[i];
@@ -227,16 +283,17 @@ class _ChatListView extends StatelessWidget {
 
         return ListTile(
           leading: const CircleAvatar(
-            // Add your profile icon logic here, such as fetching and displaying the sender's profile image
-            child: Icon(Icons.person),
+            child: Icon(
+              Icons.people,
+              color: Colors.white,
+            ),
           ),
-          title: Text('${chatItem.sender}'),
-          subtitle: Row(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${latestMessage.body}'),
-              const SizedBox(width: 8),
+              Text('${chatItem.sender}'),
               Text(
-                _formatDateTime(latestMessage.date!),
+                _formatDateTime(latestMessage.date),
                 style: const TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
@@ -244,22 +301,19 @@ class _ChatListView extends StatelessWidget {
               ),
             ],
           ),
+          subtitle: Text(
+            '${latestMessage.body}',
+            style: const TextStyle(
+              color: Colors.grey,
+            ),
+          ),
           onTap: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text('${chatItem.sender}'),
-                  content: Column(
-                    children: chatItem.messages.map((message) {
-                      return ListTile(
-                        title: Text('${message.date!}'),
-                        subtitle: Text('${message.body}'),
-                      );
-                    }).toList(),
-                  ),
-                );
-              },
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (BuildContext context) =>
+                    ConversationPage(chatItem: chatItem),
+              ),
             );
           },
         );
@@ -269,11 +323,70 @@ class _ChatListView extends StatelessWidget {
 
   String _formatDateTime(DateTime? dateTime) {
     if (dateTime != null) {
-      // Implement your formatting logic here to display the datetime in your desired format
-      // You can use the intl package or other date formatting libraries
-      return '${dateTime.hour}:${dateTime.minute}';
+      final formatter = DateFormat('HH:mm, MMM d');
+      return formatter.format(dateTime);
     } else {
       return '';
     }
+  }
+}
+
+class ConversationPage extends StatelessWidget {
+  const ConversationPage({Key? key, required this.chatItem}) : super(key: key);
+
+  final _ChatItem chatItem;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(chatItem.sender ?? 'Unknown'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.block),
+            onPressed: () {
+              // Handle block icon button press
+            },
+          ),
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: chatItem.messages.length,
+        itemBuilder: (BuildContext context, int index) {
+          var message = chatItem.messages[index];
+          bool isUserMessage = message.sender == chatItem.sender;
+
+          return ListTile(
+            title: Align(
+              alignment:
+                  isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0x289E9E9E), // Set the bubble color here
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  '${message.body ?? ''}',
+                  style: const TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+            subtitle: Align(
+              alignment:
+                  isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+              child: Text(
+                DateFormat('HH:mm').format(message.date ?? DateTime.now()),
+                style: TextStyle(
+                  color: Colors.grey[400],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
