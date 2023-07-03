@@ -1,10 +1,12 @@
-// ignore_for_file: library_private_types_in_public_api, unnecessary_string_interpolations, sized_box_for_whitespace
+// ignore_for_file: library_private_types_in_public_api, unnecessary_string_interpolations, sized_box_for_whitespace, unused_element
 
 import 'package:flutter/material.dart';
 import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+
+import 'starred.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,6 +22,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final SmsQuery _query = SmsQuery();
   List<SmsMessage> _messages = [];
+  bool _editMode = false;
 
   // Define a GlobalKey for the Scaffold to control the drawer
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -124,7 +127,9 @@ class _MyAppState extends State<MyApp> {
                 color: Colors.white,
               ),
               onPressed: () {
-                // Add your edit button functionality here
+                setState(() {
+                  _editMode = !_editMode;
+                });
               },
             ),
           ],
@@ -135,15 +140,15 @@ class _MyAppState extends State<MyApp> {
               Container(
                 height: 80,
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF69dbe4),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF69dbe4),
                     borderRadius: BorderRadius.vertical(
                       bottom: Radius.circular(16),
                     ),
                   ),
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   alignment: Alignment.centerLeft,
-                  child: Text(
+                  child: const Text(
                     'Menu',
                     style: TextStyle(
                       color: Colors.white,
@@ -160,14 +165,21 @@ class _MyAppState extends State<MyApp> {
                       leading: const Icon(Icons.mail),
                       title: const Text('All Messages'),
                       onTap: () {
-                        // Handle All Messages item click
+                        Navigator.of(_scaffoldKey.currentContext!)
+                            .popUntil((route) => route.isFirst);
                       },
                     ),
                     ListTile(
                       leading: const Icon(Icons.star),
                       title: const Text('Starred'),
                       onTap: () {
-                        // Handle Starred item click
+                        Navigator.push(
+                          _scaffoldKey
+                              .currentContext!, // Add the non-null assertion operator (!)
+                          MaterialPageRoute(builder: (context) {
+                            return StarredPage();
+                          }),
+                        );
                       },
                     ),
                     ListTile(
@@ -210,6 +222,7 @@ class _MyAppState extends State<MyApp> {
           child: chatItems.isNotEmpty
               ? _ChatListView(
                   chatItems: chatItems,
+                  editMode: _editMode, // Pass the edit mode state
                 )
               : Center(
                   child: Text(
@@ -265,20 +278,35 @@ class _ChatItem {
   }
 }
 
-class _ChatListView extends StatelessWidget {
+class _ChatListView extends StatefulWidget {
   const _ChatListView({
     Key? key,
     required this.chatItems,
+    required this.editMode,
   }) : super(key: key);
 
   final List<_ChatItem> chatItems;
+  final bool editMode;
+
+  @override
+  _ChatListViewState createState() => _ChatListViewState();
+}
+
+class _ChatListViewState extends State<_ChatListView> {
+  List<bool> starredList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    starredList = List<bool>.filled(widget.chatItems.length, false);
+  }
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      itemCount: chatItems.length,
+      itemCount: widget.chatItems.length,
       itemBuilder: (BuildContext context, int i) {
-        var chatItem = chatItems[i];
+        var chatItem = widget.chatItems[i];
         var latestMessage = chatItem.messages.last;
 
         return ListTile(
@@ -292,6 +320,17 @@ class _ChatListView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('${chatItem.sender}'),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    starredList[i] = !starredList[i];
+                  });
+                },
+                child: Icon(
+                  Icons.star,
+                  color: starredList[i] ? Colors.grey : Colors.transparent,
+                ),
+              ),
               Text(
                 _formatDateTime(latestMessage.date),
                 style: const TextStyle(
@@ -331,19 +370,42 @@ class _ChatListView extends StatelessWidget {
   }
 }
 
-class ConversationPage extends StatelessWidget {
+class ConversationPage extends StatefulWidget {
   const ConversationPage({Key? key, required this.chatItem}) : super(key: key);
 
   final _ChatItem chatItem;
 
   @override
+  _ConversationPageState createState() => _ConversationPageState();
+}
+
+class _ConversationPageState extends State<ConversationPage> {
+  bool isStarred = false;
+
+  @override
   Widget build(BuildContext context) {
+    final _ChatItem chatItem = widget.chatItem; // Access chatItem from widget
+
     return Scaffold(
       appBar: AppBar(
         title: Text(chatItem.sender ?? 'Unknown'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.block),
+            icon: Icon(
+              isStarred ? Icons.star : Icons.star_border,
+              color: isStarred ? Colors.white : Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                isStarred = !isStarred;
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.block,
+              color: Colors.white,
+            ),
             onPressed: () {
               // Handle block icon button press
             },
