@@ -1,15 +1,37 @@
 import 'package:flutter/material.dart';
 
-class BlockPage extends StatelessWidget {
-  const BlockPage({Key? key}) : super(key: key);
+class BlockPage extends StatefulWidget {
+  final List<String> blockedUsers;
+  final Function(String, bool) updateBlockedUsers;
+
+  const BlockPage({
+    Key? key,
+    required this.blockedUsers,
+    required this.updateBlockedUsers,
+  }) : super(key: key);
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _BlockPageState createState() => _BlockPageState();
+}
+
+class _BlockPageState extends State<BlockPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
-        title: const Text('Block Page'),
+        title: const Text('Blocked Users'),
         backgroundColor: const Color(0xFF69dbe4),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () {
+            _scaffoldKey.currentState!.openDrawer();
+          },
+        ),
       ),
       drawer: Drawer(
         child: Column(
@@ -42,7 +64,8 @@ class BlockPage extends StatelessWidget {
                     leading: const Icon(Icons.mail),
                     title: const Text('All Messages'),
                     onTap: () {
-                      Navigator.of(context).popUntil((route) => route.isFirst);
+                      Navigator.of(_scaffoldKey.currentContext!)
+                          .popUntil((route) => route.isFirst);
                     },
                   ),
                   ListTile(
@@ -63,11 +86,13 @@ class BlockPage extends StatelessWidget {
                     leading: const Icon(Icons.block),
                     title: const Text('Block'),
                     onTap: () {
-                      // Handle Block item click
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (BuildContext context) => const BlockPage(),
+                          builder: (BuildContext context) => BlockPage(
+                            blockedUsers: widget.blockedUsers,
+                            updateBlockedUsers: widget.updateBlockedUsers,
+                          ),
                         ),
                       );
                     },
@@ -85,8 +110,22 @@ class BlockPage extends StatelessWidget {
           ],
         ),
       ),
-      body: const Center(
-        child: Text('This is the block page'),
+      body: ListView.builder(
+        itemCount: widget.blockedUsers.length,
+        itemBuilder: (BuildContext context, int index) {
+          String blockedUser = widget.blockedUsers[index];
+          return ListTile(
+            title: Text(blockedUser),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                setState(() {
+                  widget.updateBlockedUsers(blockedUser, false);
+                });
+              },
+            ),
+          );
+        },
       ),
     );
   }

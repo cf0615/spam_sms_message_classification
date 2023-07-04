@@ -5,8 +5,7 @@ import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-
-import 'block.dart';
+import 'block_page.dart'; // Import the BlockPage
 
 void main() {
   runApp(
@@ -35,10 +34,22 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final SmsQuery _query = SmsQuery();
   List<SmsMessage> _messages = [];
+  final List<String> _blockedUsers = [];
+
   final bool _editMode = false;
 
   // Define a GlobalKey for the Scaffold to control the drawer
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void _updateBlockedUsers(String user, bool blocked) {
+    setState(() {
+      if (blocked) {
+        _blockedUsers.add(user);
+      } else {
+        _blockedUsers.remove(user);
+      }
+    });
+  }
 
   Future<void> _requestPermission() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -190,8 +201,12 @@ class _MyAppState extends State<MyApp> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (BuildContext context) =>
-                                const BlockPage(),
+                            builder: (BuildContext context) => BlockPage(
+                              blockedUsers:
+                                  _blockedUsers, // Pass the blocked users list
+                              updateBlockedUsers:
+                                  _updateBlockedUsers, // Pass the callback function
+                            ),
                           ),
                         );
                       },
@@ -353,15 +368,23 @@ class _ChatListViewState extends State<_ChatListView> {
 }
 
 class ConversationPage extends StatefulWidget {
-  const ConversationPage({Key? key, required this.chatItem}) : super(key: key);
-
   final _ChatItem chatItem;
+  const ConversationPage({Key? key, required this.chatItem}) : super(key: key);
 
   @override
   _ConversationPageState createState() => _ConversationPageState();
 }
 
 class _ConversationPageState extends State<ConversationPage> {
+  late bool isBlocked = false; // Move the variable declaration here
+
+  @override
+  void initState() {
+    super.initState();
+    // Load the block status when the page is initialized
+    loadBlockStatus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final _ChatItem chatItem = widget.chatItem; // Access chatItem from widget
@@ -371,9 +394,9 @@ class _ConversationPageState extends State<ConversationPage> {
         title: Text(chatItem.sender ?? 'Unknown'),
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.block,
-              color: Colors.white,
+              color: isBlocked ? Colors.red : Colors.white,
             ),
             onPressed: () {
               _showBlockDialog();
@@ -421,13 +444,38 @@ class _ConversationPageState extends State<ConversationPage> {
     );
   }
 
+  void loadBlockStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Get the block status for the conversation
+    bool blocked = prefs.getBool(getBlockStatusKey()) ?? false;
+    setState(() {
+      isBlocked = blocked;
+    });
+  }
+
+  void saveBlockStatus(bool blocked) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Save the block status for the conversation
+    await prefs.setBool(getBlockStatusKey(), blocked);
+  }
+
+  String getBlockStatusKey() {
+    // Generate a unique key for the conversation based on sender
+    String sender = widget.chatItem.sender ?? 'Unknown';
+    return 'block_status_$sender';
+  }
+
   void _showBlockDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Block User'),
-          content: const Text('Are you sure you want to block this user?'),
+          content: Text(
+            isBlocked
+                ? 'Are you sure you want to unblock this user?'
+                : 'Are you sure you want to block this user?',
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text(
@@ -442,13 +490,17 @@ class _ConversationPageState extends State<ConversationPage> {
             ),
             TextButton(
               child: const Text(
-                'Block',
+                'Confirm',
                 style: TextStyle(
                   color: Colors.black,
                 ),
               ),
               onPressed: () {
-                // Perform block operation
+                setState(() {
+                  isBlocked = !isBlocked;
+                });
+                // Save the block status
+                saveBlockStatus(isBlocked);
                 Navigator.of(context).pop();
               },
             ),
