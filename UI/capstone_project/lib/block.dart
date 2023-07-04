@@ -1,46 +1,20 @@
-// ignore_for_file: sized_box_for_whitespace
-
 import 'package:flutter/material.dart';
 
-class StarredPage extends StatelessWidget {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  StarredPage({Key? key}) : super(key: key);
+class BlockPage extends StatelessWidget {
+  const BlockPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey, // Set the key for the scaffold
       appBar: AppBar(
-        title:
-            const Text('Starred Page', style: TextStyle(color: Colors.white)),
+        title: const Text('Block Page'),
+        backgroundColor: const Color(0xFF69dbe4),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.menu,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            // Open the drawer when the menu icon is pressed
-            _scaffoldKey.currentState!.openDrawer();
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.edit,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              // Add your edit button functionality here
-            },
-          ),
-        ],
       ),
       drawer: Drawer(
         child: Column(
           children: <Widget>[
-            Container(
+            SizedBox(
               height: 80,
               child: Container(
                 decoration: const BoxDecoration(
@@ -72,37 +46,30 @@ class StarredPage extends StatelessWidget {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(
-                      Icons.star,
-                    ),
-                    title: const Text('Starred'),
-                    onTap: () {
-                      Navigator.pop(context); // Close the drawer
-                      // Handle starred item click here
-                    },
-                  ),
-                  ListTile(
                     leading: const Icon(Icons.report),
                     title: const Text('Spam'),
                     onTap: () {
-                      Navigator.pop(context); // Close the drawer
-                      // Handle spam item click here
+                      // Handle Spam item click
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.delete),
                     title: const Text('Bin'),
                     onTap: () {
-                      Navigator.pop(context); // Close the drawer
-                      // Handle bin item click here
+                      // Handle Bin item click
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.block),
                     title: const Text('Block'),
                     onTap: () {
-                      Navigator.pop(context); // Close the drawer
-                      // Handle block item click here
+                      // Handle Block item click
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (BuildContext context) => const BlockPage(),
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -112,18 +79,14 @@ class StarredPage extends StatelessWidget {
               leading: const Icon(Icons.settings),
               title: const Text('Settings'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
-                // Handle settings item click here
+                // Handle Settings item click
               },
             ),
           ],
         ),
       ),
       body: const Center(
-        child: Text(
-          'Starred Page',
-          style: TextStyle(fontSize: 24),
-        ),
+        child: Text('This is the block page'),
       ),
     );
   }

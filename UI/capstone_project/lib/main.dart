@@ -6,10 +6,23 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
-import 'starred.dart';
+import 'block.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MaterialApp(
+      home: Navigator(
+        onGenerateRoute: (RouteSettings settings) {
+          return MaterialPageRoute(
+            settings: settings,
+            builder: (BuildContext context) {
+              return const MyApp();
+            },
+          );
+        },
+      ),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -22,7 +35,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final SmsQuery _query = SmsQuery();
   List<SmsMessage> _messages = [];
-  bool _editMode = false;
+  final bool _editMode = false;
 
   // Define a GlobalKey for the Scaffold to control the drawer
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -120,19 +133,6 @@ class _MyAppState extends State<MyApp> {
               _scaffoldKey.currentState!.openDrawer();
             },
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.edit,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                setState(() {
-                  _editMode = !_editMode;
-                });
-              },
-            ),
-          ],
         ),
         drawer: Drawer(
           child: Column(
@@ -170,19 +170,6 @@ class _MyAppState extends State<MyApp> {
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.star),
-                      title: const Text('Starred'),
-                      onTap: () {
-                        Navigator.push(
-                          _scaffoldKey
-                              .currentContext!, // Add the non-null assertion operator (!)
-                          MaterialPageRoute(builder: (context) {
-                            return StarredPage();
-                          }),
-                        );
-                      },
-                    ),
-                    ListTile(
                       leading: const Icon(Icons.report),
                       title: const Text('Spam'),
                       onTap: () {
@@ -200,7 +187,13 @@ class _MyAppState extends State<MyApp> {
                       leading: const Icon(Icons.block),
                       title: const Text('Block'),
                       onTap: () {
-                        // Handle Block item click
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                const BlockPage(),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -320,17 +313,6 @@ class _ChatListViewState extends State<_ChatListView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('${chatItem.sender}'),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    starredList[i] = !starredList[i];
-                  });
-                },
-                child: Icon(
-                  Icons.star,
-                  color: starredList[i] ? Colors.grey : Colors.transparent,
-                ),
-              ),
               Text(
                 _formatDateTime(latestMessage.date),
                 style: const TextStyle(
@@ -380,8 +362,6 @@ class ConversationPage extends StatefulWidget {
 }
 
 class _ConversationPageState extends State<ConversationPage> {
-  bool isStarred = false;
-
   @override
   Widget build(BuildContext context) {
     final _ChatItem chatItem = widget.chatItem; // Access chatItem from widget
@@ -391,23 +371,12 @@ class _ConversationPageState extends State<ConversationPage> {
         title: Text(chatItem.sender ?? 'Unknown'),
         actions: [
           IconButton(
-            icon: Icon(
-              isStarred ? Icons.star : Icons.star_border,
-              color: isStarred ? Colors.white : Colors.white,
-            ),
-            onPressed: () {
-              setState(() {
-                isStarred = !isStarred;
-              });
-            },
-          ),
-          IconButton(
             icon: const Icon(
               Icons.block,
               color: Colors.white,
             ),
             onPressed: () {
-              // Handle block icon button press
+              _showBlockDialog();
             },
           ),
         ],
@@ -449,6 +418,43 @@ class _ConversationPageState extends State<ConversationPage> {
           );
         },
       ),
+    );
+  }
+
+  void _showBlockDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Block User'),
+          content: const Text('Are you sure you want to block this user?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text(
+                'Block',
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              ),
+              onPressed: () {
+                // Perform block operation
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
