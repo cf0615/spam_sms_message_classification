@@ -1,15 +1,57 @@
+// ignore_for_file: sized_box_for_whitespace, non_constant_identifier_names, avoid_types_as_parameter_names, prefer_const_literals_to_create_immutables, prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:capstone_project/block_page.dart';
 
-class BinPage extends StatelessWidget {
+class Message {
+  final String content;
+  bool isDeleted;
+
+  Message(this.content, this.isDeleted);
+
+  void setDeleted(bool value) {
+    isDeleted = value;
+  }
+}
+
+class BinPage extends StatefulWidget {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   BinPage({Key? key}) : super(key: key);
 
   @override
+  _BinPageState createState() => _BinPageState();
+}
+
+class _BinPageState extends State<BinPage> {
+  List<Message> messages = [
+    Message('Message 1', false),
+    Message('Message 2', false),
+    Message('Message 3', false),
+    Message('Message 4', false),
+  ];
+
+  List<Message> get allMessages =>
+      messages.where((message) => !message.isDeleted).toList();
+  List<Message> get binMessages =>
+      messages.where((message) => message.isDeleted).toList();
+
+  void moveToBin(Message message) {
+    setState(() {
+      message.isDeleted = true;
+    });
+  }
+
+  void restoreFromBin(Message message) {
+    setState(() {
+      message.isDeleted = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey, // Add the key to the Scaffold
+      key: widget._scaffoldKey, // Add the key to the Scaffold
       appBar: AppBar(
         title: const Text('Bin'),
         backgroundColor: const Color(0xFF69dbe4),
@@ -45,7 +87,7 @@ class BinPage extends StatelessWidget {
                     leading: const Icon(Icons.mail),
                     title: const Text('All Messages'),
                     onTap: () {
-                      Navigator.of(_scaffoldKey.currentContext!)
+                      Navigator.of(widget._scaffoldKey.currentContext!)
                           .popUntil((route) => route.isFirst);
                     },
                   ),
@@ -91,12 +133,34 @@ class BinPage extends StatelessWidget {
           ],
         ),
       ),
-      body: Center(
-        child: Text(
-          'This is the Bin page.',
-          style: TextStyle(fontSize: 24),
-        ),
+      body: ListView.builder(
+        itemCount: binMessages.length,
+        itemBuilder: (context, index) {
+          final message = binMessages[index];
+          return ListTile(
+            title: Text(message.content),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.restore),
+                  onPressed: () => restoreFromBin(message),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () => deleteMessage(message),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
+  }
+
+  void deleteMessage(Message message) {
+    setState(() {
+      messages.remove(message);
+    });
   }
 }
