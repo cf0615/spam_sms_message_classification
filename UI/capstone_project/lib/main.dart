@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'block_page.dart'; // Import the BlockPage
+import 'bin.dart'; // Import the BinPage
 
 void main() {
   runApp(
@@ -191,7 +192,13 @@ class _MyAppState extends State<MyApp> {
                       leading: const Icon(Icons.delete),
                       title: const Text('Bin'),
                       onTap: () {
-                        // Handle Bin item click
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                BinPage(), // Navigate to BinPage
+                          ),
+                        );
                       },
                     ),
                     ListTile(

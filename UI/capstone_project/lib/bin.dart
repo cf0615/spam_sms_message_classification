@@ -1,43 +1,23 @@
 import 'package:flutter/material.dart';
-import 'bin.dart';
+import 'package:capstone_project/block_page.dart';
 
-class BlockPage extends StatefulWidget {
-  final List<String> blockedUsers;
-  final Function(String, bool) updateBlockedUsers;
-
-  const BlockPage({
-    Key? key,
-    required this.blockedUsers,
-    required this.updateBlockedUsers,
-  }) : super(key: key);
-
-  @override
-  // ignore: library_private_types_in_public_api
-  _BlockPageState createState() => _BlockPageState();
-}
-
-class _BlockPageState extends State<BlockPage> {
+class BinPage extends StatelessWidget {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  BinPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
+      key: _scaffoldKey, // Add the key to the Scaffold
       appBar: AppBar(
-        title: const Text('Blocked Users'),
+        title: const Text('Bin'),
         backgroundColor: const Color(0xFF69dbe4),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            _scaffoldKey.currentState!.openDrawer();
-          },
-        ),
       ),
       drawer: Drawer(
         child: Column(
           children: <Widget>[
-            SizedBox(
+            Container(
               height: 80,
               child: Container(
                 decoration: const BoxDecoration(
@@ -80,25 +60,19 @@ class _BlockPageState extends State<BlockPage> {
                     leading: const Icon(Icons.delete),
                     title: const Text('Bin'),
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (BuildContext context) =>
-                              BinPage(), // Navigate to BinPage
-                        ),
-                      );
+                      // Handle Bin item click
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.block),
+                    leading: const Icon(Icons.delete),
                     title: const Text('Block'),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (BuildContext context) => BlockPage(
-                            blockedUsers: widget.blockedUsers,
-                            updateBlockedUsers: widget.updateBlockedUsers,
+                            updateBlockedUsers: (String, bool) {},
+                            blockedUsers: [],
                           ),
                         ),
                       );
@@ -117,22 +91,11 @@ class _BlockPageState extends State<BlockPage> {
           ],
         ),
       ),
-      body: ListView.builder(
-        itemCount: widget.blockedUsers.length,
-        itemBuilder: (BuildContext context, int index) {
-          String blockedUser = widget.blockedUsers[index];
-          return ListTile(
-            title: Text(blockedUser),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () {
-                setState(() {
-                  widget.updateBlockedUsers(blockedUser, false);
-                });
-              },
-            ),
-          );
-        },
+      body: Center(
+        child: Text(
+          'This is the Bin page.',
+          style: TextStyle(fontSize: 24),
+        ),
       ),
     );
   }
